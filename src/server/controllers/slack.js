@@ -26,7 +26,7 @@ const replyWithImage = (request, response) => {
   const file = util.getLatestImage(UPLOAD_PATH);
   const att = [{
     title: `Today's dish`,
-    image_url: `https://${req.headers.host}/uploads/${file}`
+    image_url: `https://${request.headers.host}/uploads/${file}`
   }];
   let attachments;
   try {
@@ -34,7 +34,7 @@ const replyWithImage = (request, response) => {
   } catch(e) {
     attachments = '';
   }
-  const channel = res.body.event.channel;
+  const channel = response.body.event.channel;
   let body = {
     token: constants.SLACK_BOT_TOKEN,
     channel: channel,
