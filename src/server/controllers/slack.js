@@ -2,13 +2,21 @@ const promise = require('es6-promise');
 const fetch = require('isomorphic-fetch');
 const querystring = require('querystring');
 const util = require('../util');
+const constants = require('../constants');
 
 const post = (req, res) => {
   console.log(req.body);
   if (req.body.challenge) {
     return res.send(req.body.challenge);
-  } else {
-    return replyWithImage( req, res );
+  }
+  switch (true) {
+    case (req.body.event.text === 'get'):
+    case (req.body.event.text.toLowerCase() === 'What\'s for lunch?'.toLowerCase()):
+      return replyWithImage( req, res );
+    case (req.body.event.bot_id):
+      return res.end();
+    default:
+      return res.end();
   }
 };
 
@@ -26,9 +34,10 @@ const replyWithImage = (request, response) => {
   } catch(e) {
     attachments = '';
   }
+  const channel = res.body.event.channel;
   let body = {
-    token: 'xoxp-237354575379-238521105431-236808994576-dd750b0d1b1c519d1cefdbaf0aab03d0',
-    channel: 'D6ZD4RTEF',
+    token: constants.SLACK_BOT_TOKEN,
+    channel: channel,
     text: 'Test',
     type: 'message',
     attachments: attachments,
