@@ -5,16 +5,17 @@ const util = require('../util');
 const constants = require('../constants');
 
 const post = (req, res) => {
-  console.log(req.body);
   if (req.body.challenge) {
     return res.send(req.body.challenge);
   }
   switch (true) {
+    case (req.body.event.bot_id):
+    case (constants.SLACK_BOT_VERIFICATION_TOKEN !== req.body.token):
+      return res.end();
     case (req.body.event.text === 'get'):
     case (req.body.event.text.toLowerCase() === 'What\'s for lunch?'.toLowerCase()):
+    case (req.body.event.text.toLowerCase() === 'What is for lunch?'.toLowerCase()):
       return replyWithImage( req, res );
-    case (req.body.event.bot_id):
-      return res.end();
     default:
       return res.end();
   }
@@ -24,42 +25,44 @@ module.exports.post = post;
 
 const replyWithImage = (request, response) => {
   const file = util.getLatestImage(UPLOAD_PATH);
-  const att = [{
-    title: `Today's dish`,
-    image_url: `https://${request.headers.host}/uploads/${file}`
-  }];
-  let attachments;
+  const channel = response.body.event.channel;
+  let attachments = '';
+
   try {
-    attachments = JSON.stringify(att);
+    attachments = JSON.stringify(
+        [{
+          title: `Today's menu:`,
+          image_url: `https://${request.headers.host}/uploads/${file}`
+        }]
+    );
   } catch(e) {
     attachments = '';
   }
-  const channel = response.body.event.channel;
+
   let body = {
     token: constants.SLACK_BOT_TOKEN,
     channel: channel,
-    text: 'Test',
+    text: (file) ? '' : 'Sorry, there is no menu',
     type: 'message',
-    attachments: attachments,
+    attachments: (file) ? attachments : '',
   };
-  const messageString = querystring.stringify(body);
-  fetch('https://slack.com/api/chat.postMessage',
+  fetch(constants.API.CHAT_POST_MESSAGE,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: messageString
+        body: querystring.stringify(body)
       }
-    )
-      .then((resp) => resp.json())
-      .then(
-        (res) => {
-          return response.send(res);
-        },
-        (err) => {
-          return response.send(err);
-        }
-      )
+  )
+  .then((resp) => resp.json())
+  .then(
+    (res) => {
+      return response.send(res);
+    },
+    (err) => {
+      return response.end(err);
+    }
+  )
 };
 

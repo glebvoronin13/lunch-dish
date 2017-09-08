@@ -44,7 +44,6 @@ const get = (req, res) => {
     }
     res.status(status).json(body);
   } catch (err) {
-    console.log(err);
     res.status(400).json({'message': 'Bad Request'});
   }
 };
